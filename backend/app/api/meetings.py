@@ -1,10 +1,20 @@
-from fastapi import APIRouter
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import APIRouter, File,HTTPException, UploadFile, status
+
 from app.schemas.meeting import MeetingResponse
 
 router = APIRouter(
     prefix="/api/v1/meetings",
     tags=["Meetings"]               
     )
+ALLOWED_EXTENSIONS = {".mp3", ".wav", ".m4a", ".webm"}
+MAX_FILE_SIZE = 100 * 1024 * 1024
+
+UPLOAD_DIRECTORY = Path("storage/uploads")
+UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
 
 @router.get("/{meeting_id}", response_model=MeetingResponse)
 def get_meeting(meeting_id:str):
@@ -13,3 +23,58 @@ def get_meeting(meeting_id:str):
         filename = "example.mp3",
         status = "processing"
     )
+
+@router.post("",
+             response_model=MeetingResponse,
+             status_code=status.HTTP_201_CREATED,
+             )
+
+async def upload_meeting(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A file must be provided.",
+        )
+    extension = Path(file.filename).suffix.lower()
+    if extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported audio format.",
+        )
+    meeting_id = str(uuid4())
+    stored_filename = f"{meeting_id}{extension}"
+    file_path = UPLOAD_DIRECTORY / stored_filename
+    total_size = 0
+    chunk_size = 1024 * 1024
+    try:
+        with file_path.open("wb") as buffer:
+            while chunk := await file.read(chunk_size):
+                total_size += len(chunk)
+
+                if total_size > MAX_FILE_SIZE:
+                    file_path.unlink(missing_ok=True)
+
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail="File size exceeds the 100 MB limit.",
+                    )
+
+                buffer.write(chunk)
+
+    except OSError as exc:
+        file_path.unlink(missing_ok=True)
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to store the uploaded file.",
+        ) from exc
+
+    
+    finally:
+        await file.close()
+    return MeetingResponse(
+        id=meeting_id,
+        filename=file.filename,
+        status="uploaded",
+        )
+    
