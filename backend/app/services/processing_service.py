@@ -2,6 +2,10 @@ from uuid import UUID
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from pathlib import Path
+
+from app.services.transcription.fake import FakeTranscriptionProvider
+from app.services.transcription.service import TranscriptionService
 
 from app.constants.meeting import (
     MEETING_STATUS_COMPLETED,
@@ -34,10 +38,14 @@ class ProcessingService:
             meeting.status = MEETING_STATUS_PROCESSING
             self.db.commit()
 
-            # Step 2: placeholder transcription
-            validate_status_transition(
-                meeting.status,
-                MEETING_STATUS_TRANSCRIBED,
+            transcription_service = TranscriptionService(
+                db=self.db,
+                provider=FakeTranscriptionProvider(),
+            )
+
+            transcription_service.transcribe(
+                meeting_id=meeting.id,
+                audio_path=Path(meeting.file_path),
             )
 
             meeting.status = MEETING_STATUS_TRANSCRIBED
