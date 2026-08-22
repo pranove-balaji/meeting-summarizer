@@ -16,3 +16,5 @@ storage/uploads/
 # OS
 .DS_Store
 Thumbs.db
+# Uploaded meeting files
+backend/storage/uploads/*
