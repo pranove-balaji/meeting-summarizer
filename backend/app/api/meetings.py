@@ -1,8 +1,10 @@
+from uuid import UUID, uuid4
 from pathlib import Path
-from uuid import uuid4
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status, File
+from sqlalchemy.orm import Session
 
-from fastapi import APIRouter, File,HTTPException, UploadFile, status
-
+from app.database.dependencies import get_db
+from app.models.meeting import Meeting
 from app.schemas.meeting import MeetingResponse
 
 router = APIRouter(
@@ -17,11 +19,17 @@ UPLOAD_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 
 @router.get("/{meeting_id}", response_model=MeetingResponse)
-def get_meeting(meeting_id:str):
+def get_meeting(meeting_id:UUID,db:Session = Depends(get_db)):
+    meeting = db.get(Meeting, meeting_id)
+    if meeting is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Meeting not found.",
+        )
     return MeetingResponse(
-        id=meeting_id,
-        filename = "example.mp3",
-        status = "processing"
+        id=str(meeting.id),
+        file_name=meeting.original_filename,
+        status=meeting.status,
     )
 
 @router.post("",
