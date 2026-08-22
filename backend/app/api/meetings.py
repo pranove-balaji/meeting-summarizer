@@ -2,7 +2,8 @@ from uuid import UUID, uuid4
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status, File
 from sqlalchemy.orm import Session
-
+from sqlalchemy.exc import SQLAlchemyError
+from uuid import UUID,uuid4
 from app.database.dependencies import get_db
 from app.models.meeting import Meeting
 from app.schemas.meeting import MeetingResponse
@@ -37,7 +38,9 @@ def get_meeting(meeting_id:UUID,db:Session = Depends(get_db)):
              status_code=status.HTTP_201_CREATED,
              )
 
-async def upload_meeting(file: UploadFile = File(...)):
+async def upload_meeting(file: UploadFile = File(...),
+                         db: Session = Depends(get_db),
+                         ):
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -49,7 +52,7 @@ async def upload_meeting(file: UploadFile = File(...)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported audio format.",
         )
-    meeting_id = str(uuid4())
+    meeting_id = uuid4()
     stored_filename = f"{meeting_id}{extension}"
     file_path = UPLOAD_DIRECTORY / stored_filename
     total_size = 0
@@ -78,11 +81,31 @@ async def upload_meeting(file: UploadFile = File(...)):
         ) from exc
 
     
-    finally:
-        await file.close()
-    return MeetingResponse(
+    
+    meeting = Meeting(
         id=meeting_id,
-        filename=file.filename,
+        original_filename=file.filename,
+        stored_filename=stored_filename,
+        file_path=str(file_path),
         status="uploaded",
-        )
+    )
+
+    try:
+        db.add(meeting)
+        db.commit()
+        db.refresh(meeting)
+
+    except SQLAlchemyError as exc:
+        db.rollback()
+        file_path.unlink(missing_ok=True)
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create a new meeting record",
+        ) from exc
+    return MeetingResponse(
+        id=str(meeting.id),
+        filename=meeting.original_filename,
+        status=meeting.status,
+    )
     
