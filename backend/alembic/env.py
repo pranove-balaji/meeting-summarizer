@@ -2,6 +2,7 @@ from logging.config import fileConfig
 from app.database.connection import Base,DATABASE_URL
 from app.models.meeting import Meeting
 from app.models.transcript import Transcript
+from app.models.meeting_result import MeetingResult
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from uuid import uuid4,UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.exc import SQLAlchemyError
@@ -11,13 +11,17 @@ from app.core.config import (
     UPLOAD_DIRECTORY,
 )
 from app.models.meeting import Meeting
+from app.models.meeting_result import MeetingResult
+from app.schemas.summary import MeetingSummary
 
 
 class MeetingService:
+
     def __init__(self, db: Session):
         self.db = db
 
     async def upload_meeting(self, file: UploadFile) -> Meeting:
+
         if not file.filename:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,7 +47,9 @@ class MeetingService:
 
         try:
             with file_path.open("wb") as buffer:
+
                 while chunk := await file.read(chunk_size):
+
                     total_size += len(chunk)
 
                     if total_size > MAX_AUDIO_FILE_SIZE:
@@ -57,6 +63,7 @@ class MeetingService:
                     buffer.write(chunk)
 
         except OSError as exc:
+
             file_path.unlink(missing_ok=True)
 
             raise HTTPException(
@@ -78,6 +85,7 @@ class MeetingService:
             self.db.refresh(meeting)
 
         except SQLAlchemyError as exc:
+
             self.db.rollback()
             file_path.unlink(missing_ok=True)
 
@@ -87,7 +95,9 @@ class MeetingService:
             ) from exc
 
         return meeting
+
     def get_meeting(self, meeting_id: UUID) -> Meeting:
+
         meeting = self.db.get(Meeting, meeting_id)
 
         if meeting is None:
@@ -97,3 +107,28 @@ class MeetingService:
             )
 
         return meeting
+
+
+def save_meeting_result(
+    db: Session,
+    meeting_id: UUID,
+    transcript: str,
+    result: MeetingSummary,
+) -> MeetingResult:
+
+    meeting_result = MeetingResult(
+        meeting_id=meeting_id,
+        transcript=transcript,
+        summary=result.summary,
+        key_points=result.key_points,
+        action_items=[
+            item.model_dump()
+            for item in result.action_items
+        ],
+    )
+
+    db.add(meeting_result)
+    db.commit()
+    db.refresh(meeting_result)
+
+    return meeting_result
