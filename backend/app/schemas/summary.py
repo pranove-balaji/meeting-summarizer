@@ -25,3 +25,15 @@ class MeetingSummary(BaseModel):
     action_items: list[ActionItem] = Field(
         description="Concrete actions agreed upon in the meeting."
     )
+
+
+class MeetingResultResponse(BaseModel):
+    id: str
+    meeting_id: str
+    transcript: str
+    summary: str
+    key_points: list[str]
+    action_items: list[ActionItem]
+
+    class Config:
+        from_attributes = True

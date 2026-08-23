@@ -108,6 +108,37 @@ class MeetingService:
 
         return meeting
 
+    def get_meeting_result(
+        self,
+        meeting_id: UUID,
+    ) -> MeetingResult:
+
+        # First check that the meeting exists
+        meeting = self.db.get(Meeting, meeting_id)
+
+        if meeting is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Meeting not found.",
+            )
+
+        # Find the generated result
+        result = (
+            self.db.query(MeetingResult)
+            .filter(
+                MeetingResult.meeting_id == meeting_id
+            )
+            .first()
+        )
+
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Meeting result is not available yet.",
+            )
+
+        return result
+
 
 def save_meeting_result(
     db: Session,

@@ -110,13 +110,17 @@ class ProcessingService:
         except Exception:
             self.db.rollback()
 
-            meeting = self.db.get(
-                Meeting,
-                meeting_id,
-            )
+            try:
+                meeting = self.db.get(
+                    Meeting,
+                    meeting_id,
+                )
 
-            if meeting is not None:
-                meeting.status = MEETING_STATUS_FAILED
-                self.db.commit()
+                if meeting is not None:
+                    meeting.status = MEETING_STATUS_FAILED
+                    self.db.commit()
+
+            except Exception:
+                self.db.rollback()
 
             raise
