@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Brain, ListChecks, MessageSquareText } from 'lucide-react';
 import UploadZone from '../components/upload/UploadZone';
+import MeetingLookup from '../components/meeting/MeetingLookup';
 import { uploadMeeting } from '../api/meetings';
 import { ApiClientError } from '../api/client';
 
@@ -77,6 +78,8 @@ export default function HomePage() {
         isUploading={isUploading}
         uploadError={uploadError}
       />
+
+      <MeetingLookup />
 
       <section className="features" aria-label="Features">
         {FEATURES.map((f) => (
