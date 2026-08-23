@@ -10,8 +10,6 @@ The project takes an uploaded meeting audio file, transcribes it using Sarvam AI
 
 The goal was to build a practical backend pipeline for turning a meeting recording into useful, structured information.
 
-![mockframe](meeting-summarizer\frontend\src\assets\mock.png)
-
 ### User flow
 
 ```text
@@ -53,6 +51,8 @@ Background Task
 ```
 
 ---
+
+![mockframe](frontend\src\assets\mock.png)
 
 # ✨ Features Implemented
 

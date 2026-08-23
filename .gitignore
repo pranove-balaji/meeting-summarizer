@@ -23,4 +23,4 @@ backend/storage/*
 # Frontend
 node_modules/
 frontend/dist/
-# frontend/src/assets/mock.png
+frontend/src/assets/mock.png
