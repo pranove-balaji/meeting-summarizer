@@ -18,3 +18,8 @@ storage/uploads/
 Thumbs.db
 # Uploaded meeting files
 backend/storage/uploads/*
+backend/storage/*
+
+# Frontend
+node_modules/
+frontend/dist/
