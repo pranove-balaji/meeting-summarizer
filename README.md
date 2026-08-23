@@ -52,7 +52,7 @@ Background Task
 
 ---
 
-![mockframe](frontend\src\assets\mock.png)
+![mockframe](frontend/src/assets/mock.png)
 
 # ✨ Features Implemented
 
