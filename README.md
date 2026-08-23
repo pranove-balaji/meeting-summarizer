@@ -79,6 +79,12 @@ Background Task
 
 ---
 
+## 🎥 Project Demo
+
+Watch the complete end-to-end demonstration of the Meeting Summarizer.
+
+[▶️ Watch Video](https://github.com/user-attachments/assets/5f94ed39-c363-4886-81ca-af1e2b3e6a36)
+
 # 🏗️ Architecture
 
 The backend follows a layered architecture rather than putting all logic inside FastAPI routes.
